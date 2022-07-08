@@ -11,16 +11,17 @@ import Game, Tournament, Season
 import matplotlib.pyplot as plt
 import numpy as np
 
-"""
+
 #Single game testing.
 print("Single Game Testing")
 filename = "Testing/2022_GandyGoose_SingleGame_Points.xlsx"
 gandy_single = Game.Game()
 gandy_single.add_PointsFromFile(filename)
 #gandy_single.print_GameStats()
-gandy_single.save_GameStats("Testing/2022_GandyGoose_SingleGame_Stats.xlsx")
-gandy_single.print_PairStats()
+gandy_single.save_Stats("Testing/2022_GandyGoose_SingleGame_Stats.xlsx")
+gandy_single.save_PairStats("Testing/2022_GandyGoose_SingleGame_PairStats.xlsx")
 
+"""
 #Make a graph showing goal scorers and assisters
 pair_stats = gandy_single.pair_stats
 data = pair_stats['GA']
@@ -35,8 +36,9 @@ plt.grid()
 plt.colorbar()
 plt.tight_layout()
 plt.savefig('Testing/GoalAssistMap.png')
-
 """
+
+
 
 """
 #Tournament testing.
@@ -44,8 +46,8 @@ print("Tournament Testing")
 filename = "Testing/2022_GandyGoose_Points.xlsx"
 gandy_goose = Tournament.Tournament()
 gandy_goose.add_GamesFromFile(filename)
-gandy_goose.save_TourneyStats("Testing/2022_GandyGoose_Stats.xlsx")
-gandy_goose.save_PairTourneyStats("Testing/2022_GandyGoose_PairStats.xlsx")
+gandy_goose.save_Stats("Testing/2022_GandyGoose_Stats.xlsx")
+gandy_goose.save_PairStats("Testing/2022_GandyGoose_PairStats.xlsx")
 
 
 #Make a graph showing goal scorers and assisters

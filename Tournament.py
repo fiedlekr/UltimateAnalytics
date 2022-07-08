@@ -14,6 +14,7 @@ class Tournament():
     
     def __init__(self, name="", games=[]):
         self.games = games
+        self.name = name
         self.tourney_stats = pd.DataFrame()
         self.pair_tourney_stats = {}
         
@@ -32,12 +33,19 @@ class Tournament():
         
     def get_stats(self):
         return self.tourney_stats
+    
+    def get_pair_stats(self):
+        return self.pair_tourney_stats
         
     def _update_stats(self):
         self.tourney_stats = pd.DataFrame()
         self._compute_DefenseTotals()
         self._compute_OffenseTotals()
         self._compute_AllPointTotals()
+        self._compute_DefPercentage()
+        self._compute_DefPercentageAboveAverage()
+        self._compute_OffPercentage()
+        self._compute_OffPercentageAboveAverage()
         self._compute_GoalTotals()
         self._compute_GoalsPerPoint()
         self._compute_AssistTotals()
@@ -75,24 +83,33 @@ class Tournament():
         self.pair_tourney_stats['DPP'] = empty_df.copy()
         self.pair_tourney_stats['OPP'] = empty_df.copy()
         self.pair_tourney_stats['PP'] = empty_df.copy()
+        self.pair_tourney_stats['D%'] = empty_df.copy()
+        self.pair_tourney_stats['O%'] = empty_df.copy()
         self.pair_tourney_stats['GA'] = empty_df.copy()
+        self.pair_tourney_stats['GAPP'] = empty_df.copy()
         self.pair_tourney_stats['BRK'] = empty_df.copy()
         self.pair_tourney_stats['BRK%'] = empty_df.copy()
+        self.pair_tourney_stats['BRK%-AVG'] = empty_df.copy()
         self.pair_tourney_stats['BAA'] = empty_df.copy()
         self.pair_tourney_stats['HLD'] = empty_df.copy()
         self.pair_tourney_stats['HLD%'] = empty_df.copy()
+        self.pair_tourney_stats['HLD%-AVG'] = empty_df.copy()
         self.pair_tourney_stats['HAA'] = empty_df.copy()
         self.pair_tourney_stats['TAA'] = empty_df.copy()
         
         self._compute_PairDefenseTotals()
         self._compute_PairOffenseTotals()
         self._compute_PairAllPointTotals()
+        self._compute_PairDefPercentage()
+        self._compute_PairOffPercentage()
         self._compute_PairGoalAssist()
         self._compute_PairBreaks()
         self._compute_PairBreakPercentage()
+        self._compute_PairBreakPercentageMinusAverage()
         self._compute_PairBreakAboveAverage()
         self._compute_PairHolds()
         self._compute_PairHoldPercentage()
+        self._compute_PairHoldPercentageMinusAverage()
         self._compute_PairHoldAboveAverage()
         self._compute_PairTotalAboveAverage() 
         
@@ -133,6 +150,64 @@ class Tournament():
                     all_points_totals[player] = game_value[player]
             
         df = pd.DataFrame.from_dict(all_points_totals, orient="index", columns=["PP"])
+        self.tourney_stats = pd.concat([self.tourney_stats, df], axis=1).fillna(0)\
+            
+    def _compute_OffPercentage(self):
+        off_percentage = {}
+        off_totals = self.tourney_stats["OPP"]
+        point_totals = self.tourney_stats["PP"]
+        for player in off_totals.keys():
+            if off_totals[player] != 0:
+                off_percentage[player] = 100*off_totals[player]/point_totals[player]
+            else:
+                off_percentage[player] = 0
+        df = pd.DataFrame.from_dict(off_percentage, orient="index", columns=["O%"])
+        self.tourney_stats = pd.concat([self.tourney_stats, df], axis=1).fillna(0)
+        
+    def _compute_OffPercentageAboveAverage(self):
+        off_percentage = self.tourney_stats["O%"]
+        total_o_points = 0
+        totaL_points = 0
+        for game in self.games:
+            for point in game.points:
+                totaL_points = totaL_points + 1
+                if point.lorax_pull is False:
+                    total_o_points = total_o_points + 1       
+        avg_o_percent = 100*total_o_points/totaL_points
+        off_percentage_above_average = {}
+        for player in off_percentage.keys():
+            off_percentage_above_average[player] = off_percentage[player] - avg_o_percent
+
+        df = pd.DataFrame.from_dict(off_percentage_above_average, orient="index", columns=["O%AA"])
+        self.tourney_stats = pd.concat([self.tourney_stats, df], axis=1).fillna(0)
+        
+    def _compute_DefPercentage(self):
+        def_percentage = {}
+        def_totals = self.tourney_stats["DPP"]
+        point_totals = self.tourney_stats["PP"]
+        for player in def_totals.keys():
+            if def_totals[player] != 0:
+                def_percentage[player] = 100*def_totals[player]/point_totals[player]
+            else:
+                def_percentage[player] = 0
+        df = pd.DataFrame.from_dict(def_percentage, orient="index", columns=["D%"])
+        self.tourney_stats = pd.concat([self.tourney_stats, df], axis=1).fillna(0)
+        
+    def _compute_DefPercentageAboveAverage(self):
+        def_percentage = self.tourney_stats["D%"]
+        total_d_points = 0
+        total_points = 0
+        for game in self.games:
+            for point in game.points:
+                total_points = total_points + 1
+                if point.lorax_pull is True:
+                    total_d_points = total_d_points + 1       
+        avg_d_percent = 100*total_d_points/total_points
+        def_percentage_above_average = {}
+        for player in def_percentage.keys():
+            def_percentage_above_average[player] = def_percentage[player] - avg_d_percent
+
+        df = pd.DataFrame.from_dict(def_percentage_above_average, orient="index", columns=["D%AA"])
         self.tourney_stats = pd.concat([self.tourney_stats, df], axis=1).fillna(0)
         
     def _compute_GoalTotals(self):
@@ -229,7 +304,7 @@ class Tournament():
         def_totals = self.tourney_stats["DPP"]
         for player in def_totals.keys():
             if def_totals[player] != 0:
-                break_percentage[player] = breaks[player]/def_totals[player]
+                break_percentage[player] = 100*breaks[player]/def_totals[player]
             else:
                 break_percentage[player] = 0
         df = pd.DataFrame.from_dict(break_percentage, orient="index", columns=["BRK%"])
@@ -247,7 +322,7 @@ class Tournament():
         
         #Round the result to a reasonable number of decimal places
         for player in break_above_average.keys():
-            break_above_average[player] = round(break_above_average[player], 2)
+            break_above_average[player] = round(break_above_average[player], 4)
             
         df = pd.DataFrame.from_dict(break_above_average, orient="index", columns=["BAA"])
         self.tourney_stats = pd.concat([self.tourney_stats, df], axis=1).fillna(0)    
@@ -271,7 +346,7 @@ class Tournament():
         off_totals = self.tourney_stats["OPP"]
         for player in off_totals.keys():
             if off_totals[player] != 0:
-                hold_percentage[player] = holds[player]/off_totals[player]
+                hold_percentage[player] = 100*holds[player]/off_totals[player]
             else:
                 hold_percentage[player] = 0
         df = pd.DataFrame.from_dict(hold_percentage, orient="index", columns=["HLD%"])
@@ -289,7 +364,7 @@ class Tournament():
         
         #Round the result to a reasonable number of decimal places
         for player in holds_above_average.keys():
-            holds_above_average[player] = round(holds_above_average[player], 2)
+            holds_above_average[player] = round(holds_above_average[player], 4)
             
         df = pd.DataFrame.from_dict(holds_above_average, orient="index", columns=["HAA"])
         self.tourney_stats = pd.concat([self.tourney_stats, df], axis=1).fillna(0)
@@ -321,6 +396,10 @@ class Tournament():
             totals['DPP'] = totals['DPP']/7
             totals['OPP'] = totals['OPP']/7
             totals['PP'] = totals['PP']/7
+            totals['D%'] = totals['D%']/len(game.stats['D%'].keys())
+            totals['D%AA'] = ''
+            totals['O%'] = totals['O%']/len(game.stats['O%'].keys())
+            totals['O%AA'] = ''
             totals['GPP'] = ''
             totals['APP'] = ''
             totals['GAPP'] = ''
@@ -336,7 +415,7 @@ class Tournament():
             self.games[ind] = game
             
         
-    def save_TourneyStats(self, filename): 
+    def save_Stats(self, filename): 
         #Create total rows at the end for each game.
         self._compute_TotalGameRows()
         
@@ -348,6 +427,8 @@ class Tournament():
         totals['DPP'] = totals['DPP']/7
         totals['OPP'] = totals['OPP']/7
         totals['PP'] = totals['PP']/7
+        totals['D%'] = totals['D%']/len(self.tourney_stats['D%'].keys())
+        totals['O%'] = totals['O%']/len(self.tourney_stats['O%'].keys())
         totals['GPP'] = ''
         totals['APP'] = ''
         totals['GAPP'] = ''
@@ -367,15 +448,13 @@ class Tournament():
             game.stats.to_excel(writer, sheet_name=game.name)
         writer.save()
         
-    def save_PairTourneyStats(self, filename):         
+    def save_PairStats(self, filename):         
         #Create an excel writer.
         writer = pd.ExcelWriter(filename)
         for stat in self.pair_tourney_stats:
             self.pair_tourney_stats[stat].to_excel(writer, sheet_name=stat)
         writer.save()
         
-
-            
     def _compute_PairDefenseTotals(self):
         for game in self.games:
             game_value = game.pair_stats["DPP"]
@@ -397,6 +476,24 @@ class Tournament():
                 for second in game_value.keys():
                     self.pair_tourney_stats["PP"][first][second] = self.pair_tourney_stats["PP"][first][second] + game_value[first][second]
 
+    def _compute_PairOffPercentage(self):
+        off_totals = self.pair_tourney_stats["OPP"]
+        for first in off_totals.to_dict().keys():
+            for second in off_totals.to_dict().keys():
+                if off_totals[first][second] != 0:
+                    self.pair_tourney_stats['O%'][first][second] = 100*off_totals[first][second]/off_totals[first][first]
+                else:
+                    self.pair_tourney_stats['O%'][first][second] = 0
+                    
+    def _compute_PairDefPercentage(self):
+        def_totals = self.pair_tourney_stats["DPP"]
+        for first in def_totals.to_dict().keys():
+            for second in def_totals.to_dict().keys():
+                if def_totals[first][second] != 0:
+                    self.pair_tourney_stats['D%'][first][second] = 100*def_totals[first][second]/def_totals[first][first]
+                else:
+                    self.pair_tourney_stats['D%'][first][second] = 0
+
     def _compute_PairGoalAssist(self):
         for game in self.games:
             game_value = game.pair_stats["GA"]
@@ -417,9 +514,25 @@ class Tournament():
         for first in def_totals.to_dict().keys():
             for second in def_totals.to_dict().keys():
                 if def_totals[first][second] != 0:
-                    self.pair_tourney_stats['BRK%'][first][second] = breaks[first][second]/def_totals[first][second]
+                    self.pair_tourney_stats['BRK%'][first][second] = 100*breaks[first][second]/def_totals[first][second]
                 else:
                     self.pair_tourney_stats['BRK%'][first][second] = 0    
+                    
+    def _compute_PairBreakPercentageMinusAverage(self):
+        breaks = self.tourney_stats["BRK"]
+        total_breaks = sum(breaks)/7
+        d_points = self.tourney_stats["DPP"]
+        total_d_points = sum(d_points)/7
+        avg_breakPercentage = 100*total_breaks/total_d_points
+        
+        breaks = self.pair_tourney_stats["BRK"]
+        def_totals = self.pair_tourney_stats["DPP"]
+        for first in def_totals.to_dict().keys():
+            for second in def_totals.to_dict().keys():
+                if def_totals[first][second] != 0:
+                    self.pair_tourney_stats['BRK%-AVG'][first][second] = 100*breaks[first][second]/def_totals[first][second] - avg_breakPercentage
+                else:
+                    self.pair_tourney_stats['BRK%-AVG'][first][second] = 0
 
     def _compute_PairBreakAboveAverage(self):
         for game in self.games:
@@ -442,9 +555,25 @@ class Tournament():
         for first in off_totals.to_dict().keys():
             for second in off_totals.to_dict().keys():
                 if off_totals[first][second] != 0:
-                    self.pair_tourney_stats['HLD%'][first][second] = holds[first][second]/off_totals[first][second]
+                    self.pair_tourney_stats['HLD%'][first][second] = 100*holds[first][second]/off_totals[first][second]
                 else:
                     self.pair_tourney_stats['HLD%'][first][second] = 0
+                    
+    def _compute_PairHoldPercentageMinusAverage(self):
+        holds = self.tourney_stats["HLD"]
+        total_holds = sum(holds)/7
+        o_points = self.tourney_stats["OPP"]
+        total_o_points = sum(o_points)/7
+        avg_holdPercentage = 100*total_holds/total_o_points
+        
+        holds = self.pair_tourney_stats["HLD"]
+        off_totals = self.pair_tourney_stats["OPP"]
+        for first in off_totals.to_dict().keys():
+            for second in off_totals.to_dict().keys():
+                if off_totals[first][second] != 0:
+                    self.pair_tourney_stats['HLD%-AVG'][first][second] = 100*holds[first][second]/off_totals[first][second] - avg_holdPercentage
+                else:
+                    self.pair_tourney_stats['HLD%-AVG'][first][second] = 0
     
     def _compute_PairHoldAboveAverage(self):
         for game in self.games:
