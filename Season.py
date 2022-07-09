@@ -4,7 +4,7 @@ Class to represent the information needed to describe an ultimate season.
 
 Author: Kevin Fiedler
 Date Created: 6/22/22
-Date Last Modified: 6/22/22
+Date Last Modified: 7/9/22
 """
 
 import Tournament
@@ -55,25 +55,20 @@ class Season():
         self._compute_Holds()
         self._compute_HoldPercentage()
         self._compute_HoldAboveAverage()
-        self._compute_TotalAboveAverage()  
-        
-        #For the pair stats, it is convenient to have the dataframes preconstructed.
-        players = []
-        for tournament in self.tournaments.keys():
-            games = self.tournaments[tournament].games
-            for game in games:
-                for point in game.points:
-                    for player in point.male_players:
-                        if player not in players:
-                            players.append(player)
-                    for player in point.female_players:
-                        if player not in players:
-                            players.append(player)
+        self._compute_TotalAboveAverage()
+                            
+        #Sort the pair data based upon TAA values.
+        total_above_average = self.season_stats['TAA'].sort_values(ascending=False)
+        players = total_above_average.keys()
         
         empty_df = pd.DataFrame()
         for player in players:
+            if type(player) is type(0.0): #Skip nan values.
+                continue
             partners = {}
             for partner in players:
+                if type(partner) is type(0.0): #Skip nan values.
+                    continue
                 partners[partner] = 0.0
             df = pd.DataFrame.from_dict(partners, orient="index", columns=[player])
             empty_df = pd.concat([empty_df, df], axis=1).fillna(0)   
@@ -85,7 +80,6 @@ class Season():
         self.pair_season_stats['D%'] = empty_df.copy()
         self.pair_season_stats['O%'] = empty_df.copy()
         self.pair_season_stats['GA'] = empty_df.copy()
-        self.pair_season_stats['GAPP'] = empty_df.copy()
         self.pair_season_stats['BRK'] = empty_df.copy()
         self.pair_season_stats['BRK%'] = empty_df.copy()
         self.pair_season_stats['BRK%-AVG'] = empty_df.copy()
@@ -453,7 +447,7 @@ class Season():
         for first in def_totals.to_dict().keys():
             for second in def_totals.to_dict().keys():
                 if def_totals[first][second] != 0:
-                    self.pair_season_stats['BRK%'][first][second] = breaks[first][second]/def_totals[first][second]
+                    self.pair_season_stats['BRK%'][first][second] = 100*breaks[first][second]/def_totals[first][second]
                 else:
                     self.pair_season_stats['BRK%'][first][second] = 0    
                     
@@ -462,14 +456,14 @@ class Season():
         total_breaks = sum(breaks)/7
         d_points = self.season_stats["DPP"]
         total_d_points = sum(d_points)/7
-        avg_breakPercentage = total_breaks/total_d_points
+        avg_breakPercentage = 100*total_breaks/total_d_points
         
         breaks = self.pair_season_stats["BRK"]
         def_totals = self.pair_season_stats["DPP"]
         for first in def_totals.to_dict().keys():
             for second in def_totals.to_dict().keys():
                 if def_totals[first][second] != 0:
-                    self.pair_season_stats['BRK%-AVG'][first][second] = breaks[first][second]/def_totals[first][second] - avg_breakPercentage
+                    self.pair_season_stats['BRK%-AVG'][first][second] = 100*breaks[first][second]/def_totals[first][second] - avg_breakPercentage
                 else:
                     self.pair_season_stats['BRK%-AVG'][first][second] = 0
 
@@ -493,7 +487,7 @@ class Season():
         for first in off_totals.to_dict().keys():
             for second in off_totals.to_dict().keys():
                 if off_totals[first][second] != 0:
-                    self.pair_season_stats['HLD%'][first][second] = holds[first][second]/off_totals[first][second]
+                    self.pair_season_stats['HLD%'][first][second] = 100*holds[first][second]/off_totals[first][second]
                 else:
                     self.pair_season_stats['HLD%'][first][second] = 0
     
@@ -502,17 +496,16 @@ class Season():
         total_holds = sum(holds)/7
         o_points = self.season_stats["OPP"]
         total_o_points = sum(o_points)/7
-        avg_holdPercentage = total_holds/total_o_points
+        avg_holdPercentage = 100*total_holds/total_o_points
         
         holds = self.pair_season_stats["HLD"]
         off_totals = self.pair_season_stats["OPP"]
         for first in off_totals.to_dict().keys():
             for second in off_totals.to_dict().keys():
                 if off_totals[first][second] != 0:
-                    self.pair_season_stats['HLD%-AVG'][first][second] = holds[first][second]/off_totals[first][second] - avg_holdPercentage
+                    self.pair_season_stats['HLD%-AVG'][first][second] = 100*holds[first][second]/off_totals[first][second] - avg_holdPercentage
                 else:
                     self.pair_season_stats['HLD%-AVG'][first][second] = 0
-
     
     def _compute_PairHoldAboveAverage(self):
         for tournament in self.tournaments.keys():

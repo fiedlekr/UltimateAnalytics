@@ -4,7 +4,7 @@ Compute the statistics for a season.
 
 Author: Kevin Fiedler
 Date Created: 6/22/2022
-Date Last Modified: 7/7/2022
+Date Last Modified: 7/9/2022
 """
 
 from Tournament import Tournament
@@ -15,7 +15,7 @@ import numpy as np
 def make_pair_plots(structure, base_filename):
     #Make a graph showing offensive points played
     pair_stats = structure.get_pair_stats()
-    data = pair_stats['OPP']/pair_stats['PP']
+    data = pair_stats['OPP']
     plt.close('all')
     plt.figure(figsize=(10, 10), dpi=600)
     plt.imshow(data, origin='lower')
@@ -23,7 +23,7 @@ def make_pair_plots(structure, base_filename):
     plt.ylabel('Player')
     plt.xticks(ticks=range(0,len(data.to_dict().keys())), labels=data.to_dict().keys(), rotation=90)
     plt.xlabel('Player')
-    plt.title(str(base_filename) + ' Offensive Percentage')
+    plt.title(str(base_filename) + ' Offensive Points Played')
     plt.grid()
     plt.colorbar()
     plt.set_cmap('binary')
@@ -31,7 +31,7 @@ def make_pair_plots(structure, base_filename):
     plt.savefig('Plots/' + str(base_filename) + '_Points_Offense_Map.png', dpi=600)
     
     #Make a graph showing the defensive points played
-    data = pair_stats['DPP']/pair_stats['PP']
+    data = pair_stats['DPP']
     plt.close('all')
     plt.figure(figsize=(10, 10), dpi=600)
     plt.imshow(data, origin='lower')
@@ -39,7 +39,7 @@ def make_pair_plots(structure, base_filename):
     plt.ylabel('Player')
     plt.xticks(ticks=range(0,len(data.to_dict().keys())), labels=data.to_dict().keys(), rotation=90)
     plt.xlabel('Player')
-    plt.title(str(base_filename) + ' Defensive Percentage')
+    plt.title(str(base_filename) + ' Defensive Points Played')
     plt.grid()
     plt.colorbar()
     plt.set_cmap('binary')
@@ -60,7 +60,7 @@ def make_pair_plots(structure, base_filename):
     plt.colorbar()
     plt.set_cmap('binary')
     plt.tight_layout()
-    plt.savefig('Plots/' + str(base_filename) + '_PointsD%_Map.png', dpi=600)
+    plt.savefig('Plots/' + str(base_filename) + '_Points_D%_Map.png', dpi=600)
     
     #Make a graph showing O% played with pairs
     data = pair_stats['O%']
@@ -76,7 +76,7 @@ def make_pair_plots(structure, base_filename):
     plt.colorbar()
     plt.set_cmap('binary')
     plt.tight_layout()
-    plt.savefig('Plots/' + str(base_filename) + '_PointsO%_Map.png', dpi=600)
+    plt.savefig('Plots/' + str(base_filename) + '_Points_O%_Map.png', dpi=600)
     
     
     #Make a graph showing goal scorers and assisters
@@ -167,6 +167,8 @@ def make_pair_plots(structure, base_filename):
     
     plt.close('all')
 
+
+
 print("2022 - Onion Fest")
 filename = "PointData/2022_OnionFest_Points.xlsx"
 base_filename = '2022_OnionFest'
@@ -175,7 +177,6 @@ tourney.add_GamesFromFile(filename)
 tourney.save_Stats("Stats/" + str(base_filename) + "_Stats.xlsx")
 tourney.save_PairStats("Stats/" + str(base_filename) + "_PairStats.xlsx")
 make_pair_plots(tourney, base_filename)
-
 
 print("2022 - Gandy Goose")
 filename = "PointData/2022_GandyGoose_Points.xlsx"

@@ -4,7 +4,7 @@ Class to represent the information needed to describe an ultimate tournament.
 
 Author: Kevin Fiedler
 Date Created: 5/31/22
-Date Last Modified: 6/6/22
+Date Last Modified: 7/9/22
 """
 
 import Game
@@ -60,21 +60,18 @@ class Tournament():
         self._compute_HoldAboveAverage()
         self._compute_TotalAboveAverage()  
         
-        #For the pair stats, it is convenient to have the dataframes preconstructed.
-        players = []
-        for game in self.games:
-            for point in game.points:
-                for player in point.male_players:
-                    if player not in players:
-                        players.append(player)
-                for player in point.female_players:
-                    if player not in players:
-                        players.append(player)
+        #Sort the pair data based upon TAA values.
+        total_above_average = self.tourney_stats['TAA'].sort_values(ascending=False)
+        players = total_above_average.keys()
         
         empty_df = pd.DataFrame()
         for player in players:
+            if type(player) is type(0.0): #Skip nan values.
+                continue
             partners = {}
             for partner in players:
+                if type(partner) is type(0.0): #Skip nan values.
+                    continue
                 partners[partner] = 0.0
             df = pd.DataFrame.from_dict(partners, orient="index", columns=[player])
             empty_df = pd.concat([empty_df, df], axis=1).fillna(0)   
