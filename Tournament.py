@@ -60,9 +60,20 @@ class Tournament():
         self._compute_HoldAboveAverage()
         self._compute_TotalAboveAverage()  
         
-        #Sort the pair data based upon TAA values.
-        total_above_average = self.tourney_stats['TAA'].sort_values(ascending=False)
-        players = total_above_average.keys()
+        #For the pair stats, it is convenient to have the dataframes preconstructed.
+        players = []
+        for game in self.games:
+            for point in game.points:
+                for player in point.male_players:
+                    if player not in players:
+                        players.append(player)
+                for player in point.female_players:
+                    if player not in players:
+                        players.append(player)
+        
+        # #Sort the pair data based upon TAA values.
+        # total_above_average = self.tourney_stats['TAA'].sort_values(ascending=False)
+        # players = total_above_average.keys()
         
         empty_df = pd.DataFrame()
         for player in players:
